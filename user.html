@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS Learning</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>User Page</h1>
+      <div class="mb-3">
+        <label class="form-label"></label>
+        <input
+          type="search"
+          class="form-control"
+          oninput="filterData(event)"
+          placeholder="Filter By First Name"
+        />
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Avatar</th>
+              <th>Email</th>
+              <th role="button" onclick="sortByFirstName()">Firstname</th>
+              <th role="button" onclick="sortByLastName()">LastName</th>
+            </tr>
+          </thead>
+          <tbody id="dynamicTableData"></tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  window.onload = function () {
+    if (fetchTokenFromStorage()) {
+      sendHTTPReqForUser();
+
+      clearTokenAfterAWhile();
+    } else {
+      window.location.href = '/index.html';
+    }
+  };
+</script>
+<script>
+  // var mockData = { "page": 2, "per_page": 6, "total": 12, "total_pages": 2, "data": [{ "id": 7, "email": "michael.lawson@reqres.in", "first_name": "Michael", "last_name": "Lawson", "avatar": "https://reqres.in/img/faces/7-image.jpg" }, { "id": 8, "email": "lindsay.ferguson@reqres.in", "first_name": "Lindsay", "last_name": "Ferguson", "avatar": "https://reqres.in/img/faces/8-image.jpg" }, { "id": 9, "email": "tobias.funke@reqres.in", "first_name": "Tobias", "last_name": "Funke", "avatar": "https://reqres.in/img/faces/9-image.jpg" }, { "id": 10, "email": "byron.fields@reqres.in", "first_name": "Byron", "last_name": "Fields", "avatar": "https://reqres.in/img/faces/10-image.jpg" }, { "id": 11, "email": "george.edwards@reqres.in", "first_name": "George", "last_name": "Edwards", "avatar": "https://reqres.in/img/faces/11-image.jpg" }, { "id": 12, "email": "rachel.howell@reqres.in", "first_name": "Rachel", "last_name": "Howell", "avatar": "https://reqres.in/img/faces/12-image.jpg" }], "support": { "url": "https://reqres.in/#support-heading", "text": "To keep ReqRes free, contributions towards server costs are appreciated!" } }
+</script>
+<script>
+  var userData;
+
+  var url = 'https://reqres.in/api/users?page=1';
+  var method = 'GET';
+
+  function fetchTokenFromStorage() {
+    let val = null;
+    try {
+      val = JSON.parse(localStorage.getItem('my-app-token'));
+      val = val.token;
+    } catch (e) {
+      val = null;
+    }
+
+    return val;
+  }
+
+  function filterData(event) {
+    filterByFirstName(event.target.value);
+  }
+
+  function filterByFirstName(value) {
+    let str = '';
+    let dataUsedForFiltering = [...userData];
+    if (value) {
+      dataUsedForFiltering = userData.filter((item, index, array) => {
+        if (item.first_name.toLowerCase().includes(value)) {
+          return value;
+        }
+      });
+    }
+    if (dataUsedForFiltering.length === 0) {
+      str +=
+        '<tr><td colspan="4" class="text-center">No User Data to Show</td></tr>';
+      document.querySelector('#dynamicTableData').innerHTML = '';
+
+      document.querySelector('#dynamicTableData').innerHTML = str;
+    } else {
+      dataUsedForFiltering.forEach((row, index, arr) => {
+        str += `<tr class="align-middle">\
+                
+                <td><img src="${row.avatar}" width="50" height="50" class="img-thumbnail rounded-circle"></td>
+                <td>${row.email}</td>
+                <td>${row.first_name}</td>
+                <td>${row.last_name}</td>            
+                </tr>`;
+        document.querySelector('#dynamicTableData').innerHTML = '';
+
+        document.querySelector('#dynamicTableData').innerHTML = str;
+      });
+    }
+  }
+  function sendHTTPReqForUser() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open(method, url, true);
+    xhttp.setRequestHeader('Content-type', 'application/json');
+    xhttp.responseType = 'json'; // this method responsible for making response as json or string
+    if (fetchTokenFromStorage())
+      xhttp.setRequestHeader(
+        'Authorization',
+        `Bearer ${fetchTokenFromStorage()}`
+      );
+    xhttp.onreadystatechange = function () {
+      if (xhttp.status === 200) {
+        fetchDataForTable(xhttp.response);
+      }
+    };
+    xhttp.send();
+  }
+
+  function fetchDataForTable(data) {
+    console.log(data);
+
+    // data = mockData;
+
+    let str = '';
+
+    userData = data && data.data ? data.data : [];
+
+    for (let row of userData) {
+      str += `<tr class="align-middle">\
+            
+            <td><img src="${row.avatar}" width="50" height="50" class="img-thumbnail rounded-circle"></td>
+            <td>${row.email}</td>
+            <td>${row.first_name}</td>
+            <td>${row.last_name}</td>            
+            </tr>`;
+    }
+
+    document.querySelector('#dynamicTableData').innerHTML = '';
+
+    document.querySelector('#dynamicTableData').innerHTML = str;
+  }
+
+  function sortByFirstName() {
+    let str = '';
+    userData
+      .sort((a, b) => a.first_name.localeCompare(b.first_name))
+      .forEach((row, index, arr) => {
+        str += `<tr>\
+            
+            <td><img src="${row.avatar}" width="50" height="50" class="img-thumbnail rounded-circle"></td>
+            <td>${row.email}</td>
+            <td>${row.first_name}</td>
+            <td>${row.last_name}</td>            
+            </tr>`;
+        document.querySelector('#dynamicTableData').innerHTML = '';
+
+        document.querySelector('#dynamicTableData').innerHTML = str;
+      });
+  }
+  function sortByLastName() {
+    let str = '';
+    userData
+      .sort((a, b) => a.last_name.localeCompare(b.last_name))
+      .forEach((row, index, arr) => {
+        str += `<tr>\
+            
+            <td><img src="${row.avatar}" width="50" height="50" class="img-thumbnail rounded-circle"></td>
+            <td>${row.email}</td>
+            <td>${row.first_name}</td>
+            <td>${row.last_name}</td>            
+            </tr>`;
+        document.querySelector('#dynamicTableData').innerHTML = '';
+
+        document.querySelector('#dynamicTableData').innerHTML = str;
+      });
+  }
+
+  function clearTokenAfterAWhile() {
+    setTimeout(() => {
+      localStorage.removeItem('my-app-token');
+      window.location;
+    }, 30 * 60 * 1000); // 30 minutes
+  }
+</script>
